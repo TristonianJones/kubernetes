@@ -163,6 +163,37 @@ func TestCheckTypeNamesMatchFieldPathNames(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("does not call ObjectVal.Value() on ancestor objects", func(t *testing.T) {
+		leaf := &countingVal{Val: types.Int(100)}
+		obj := &ObjectVal{
+			objectType: types.NewObjectType("Object"),
+			fields: map[string]ref.Val{
+				"spec": &ObjectVal{
+					objectType: types.NewObjectType("Object.spec"),
+					fields: map[string]ref.Val{
+						"replicas": leaf,
+					},
+				},
+			},
+		}
+		if err := obj.CheckTypeNamesMatchFieldPathNames(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if leaf.valueCalls != 1 {
+			t.Errorf("expected leaf.Value() to be called once, got %d calls", leaf.valueCalls)
+		}
+	})
+}
+
+type countingVal struct {
+	ref.Val
+	valueCalls int
+}
+
+func (c *countingVal) Value() any {
+	c.valueCalls++
+	return c.Val.Value()
 }
 
 func TestConvertField(t *testing.T) {

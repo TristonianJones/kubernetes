@@ -195,6 +195,7 @@ func typeCheck(v ref.Val, typeNamePath []string) []error {
 		for k, f := range ov.fields {
 			errs = append(errs, typeCheck(f, append(typeNamePath, k))...)
 		}
+		return errs
 	}
 	value := v.Value()
 	if listOfVal, ok := value.([]ref.Val); ok {
